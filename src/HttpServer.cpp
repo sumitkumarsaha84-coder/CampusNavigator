@@ -171,21 +171,22 @@ bool HttpServer::start(bool blocking) {
     return true;
 }
 
+
 void HttpServer::runLoop() {
     while (m_running) {
         sockaddr_in clientAddr{};
-        
-sockaddr_in clientAddr{};
 
 #ifdef _WIN32
-int clientLen = sizeof(clientAddr);
+        int clientLen = sizeof(clientAddr);
 #else
-socklen_t clientLen = sizeof(clientAddr);
+        socklen_t clientLen = sizeof(clientAddr);
 #endif
 
-SOCKET clientSock = accept(static_cast<SOCKET>(m_listenSocket),
-                           reinterpret_cast<sockaddr*>(&clientAddr),
-                           &clientLen);
+        SOCKET clientSock = accept(
+            static_cast<SOCKET>(m_listenSocket),
+            reinterpret_cast<sockaddr*>(&clientAddr),
+            &clientLen
+        );
 
         if (clientSock == INVALID_SOCKET) {
             if (!m_running) break;
@@ -193,10 +194,13 @@ SOCKET clientSock = accept(static_cast<SOCKET>(m_listenSocket),
         }
 
         std::thread([this, clientSock]() {
-            handleConnection(static_cast<std::uintptr_t>(clientSock));
+            handleConnection(
+                static_cast<std::uintptr_t>(clientSock)
+            );
         }).detach();
     }
 }
+
 
 void HttpServer::handleConnection(std::uintptr_t clientSock) {
     SOCKET sock = static_cast<SOCKET>(clientSock);
