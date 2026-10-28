@@ -4,6 +4,7 @@
 #include "HttpServer.hpp"
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,9 +28,24 @@ int main(int argc, char* argv[]) {
         campus::CampusGraph campusMap;
         campus::CampusData::loadDefaultCampus(campusMap);
 
-        bool cliMode = false;
-        int port = 8080;
-        std::string webRoot = "web";
+        
+bool cliMode = false;
+int port = 8080;
+
+if (const char* envPort = std::getenv("PORT")) {
+    try {
+        int parsedPort = std::stoi(envPort);
+        if (parsedPort >= 1 && parsedPort <= 65535) {
+            port = parsedPort;
+        }
+    } catch (...) {
+        std::cerr << "Warning: Invalid PORT environment variable. "
+                  << "Using default port 8080." << std::endl;
+    }
+}
+
+std::string webRoot = "web";
+
 
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
