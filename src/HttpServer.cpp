@@ -174,10 +174,19 @@ bool HttpServer::start(bool blocking) {
 void HttpServer::runLoop() {
     while (m_running) {
         sockaddr_in clientAddr{};
-        int clientLen = sizeof(clientAddr);
-        SOCKET clientSock = accept(static_cast<SOCKET>(m_listenSocket),
-                                   reinterpret_cast<sockaddr*>(&clientAddr),
-                                   &clientLen);
+        
+sockaddr_in clientAddr{};
+
+#ifdef _WIN32
+int clientLen = sizeof(clientAddr);
+#else
+socklen_t clientLen = sizeof(clientAddr);
+#endif
+
+SOCKET clientSock = accept(static_cast<SOCKET>(m_listenSocket),
+                           reinterpret_cast<sockaddr*>(&clientAddr),
+                           &clientLen);
+
         if (clientSock == INVALID_SOCKET) {
             if (!m_running) break;
             continue;
