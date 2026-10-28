@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Navigator — Smart Campus Route Finder (ADSA C++17)</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+            <line x1="9" y1="3" x2="9" y2="18"></line>
+            <line x1="15" y1="6" x2="15" y2="21"></line>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">CAMPUS NAVIGATOR</h1>
+          <p class="brand-subtitle">Smart Campus Route Finder &bull; C++17 ADSA Semester Project</p>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <span class="badge badge-tech">ISO C++17</span>
+        <span class="badge badge-tech">Adjacency List</span>
+        <span class="badge badge-tech">Min-Priority Queue</span>
+        <div id="backend-status" class="status-pill status-connecting">
+          <span class="status-dot"></span>
+          <span id="backend-status-text">Connecting to C++ Backend...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI Metric Summary Bar -->
+  <section class="kpi-strip">
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <span class="kpi-label">Campus Landmarks</span>
+        <span class="kpi-val" id="stat-vertices">16</span>
+        <span class="kpi-sub">Physical Vertices |V|</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Connected Pathways</span>
+        <span class="kpi-val" id="stat-edges">44</span>
+        <span class="kpi-sub">Directed Edges |E|</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Graph Connectivity</span>
+        <span class="kpi-val" id="stat-components">2</span>
+        <span class="kpi-sub" id="stat-components-sub">1 Isolated Satellite</span>
+      </div>
+      <div class="kpi-card highlight">
+        <span class="kpi-label">Active ADSA Engine</span>
+        <span class="kpi-val text-accent" id="stat-active-algo">Dijkstra</span>
+        <span class="kpi-sub">O((|V|+|E|) log |V|)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Application Body -->
+  <main class="app-main">
+    
+    <!-- Left Sidebar: Route Planner & Controls -->
+    <aside class="sidebar-pane">
+      
+      <!-- Primary Navigation Card -->
+      <div class="card planner-card">
+        <div class="card-header">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <h2 class="card-title">Route Planner</h2>
+        </div>
+
+        <form id="route-form" class="planner-form" onsubmit="event.preventDefault(); window.app.handleFindRoute();">
+          
+          <!-- Origin Location -->
+          <div class="form-group">
+            <label for="select-origin" class="form-label">
+              <span class="dot dot-origin"></span> Origin / Starting Landmark
+            </label>
+            <select id="select-origin" class="form-select" required>
+              <option value="" disabled selected>Select origin landmark...</option>
+            </select>
+          </div>
+
+          <!-- Swap Button -->
+          <div class="swap-row">
+            <button type="button" class="btn btn-icon btn-secondary" onclick="window.app.swapEndpoints()" title="Swap Origin and Destination">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+                <polyline points="17 14 12 9 7 14"></polyline>
+                <line x1="12" y1="9" x2="12" y2="21"></line>
+              </svg>
+              <span>Swap Direction</span>
+            </button>
+          </div>
+
+          <!-- Destination Location -->
+          <div class="form-group">
+            <label for="select-dest" class="form-label">
+              <span class="dot dot-dest"></span> Destination Landmark
+            </label>
+            <select id="select-dest" class="form-select" required>
+              <option value="" disabled selected>Select destination landmark...</option>
+            </select>
+          </div>
+
+          <!-- Algorithm Selector -->
+          <div class="form-group">
+            <label class="form-label">ADSA Pathfinding Algorithm</label>
+            <div class="algo-pill-group">
+              <label class="algo-pill active" data-algo="dijkstra">
+                <input type="radio" name="algorithm" value="dijkstra" checked>
+                <span class="algo-name">Dijkstra</span>
+                <span class="algo-desc">Min Meters (Heap)</span>
+              </label>
+              <label class="algo-pill" data-algo="bfs">
+                <input type="radio" name="algorithm" value="bfs">
+                <span class="algo-name">BFS</span>
+                <span class="algo-desc">Fewest Hops (Queue)</span>
+              </label>
+              <label class="algo-pill" data-algo="dfs">
+                <input type="radio" name="algorithm" value="dfs">
+                <span class="algo-name">DFS</span>
+                <span class="algo-desc">Exploratory (Stack)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="btn-grid">
+            <button type="submit" class="btn btn-primary" id="btn-find-route">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Calculate Route
+            </button>
+            <button type="button" class="btn btn-accent" onclick="window.app.handleCompareAll()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="9" y1="21" x2="9" y2="9"></line>
+              </svg>
+              Compare All 3
+            </button>
+          </div>
+        </form>
+
+        <!-- Benchmark Presets -->
+        <div class="preset-box">
+          <span class="preset-title">ADSA Benchmark Scenarios:</span>
+          <div class="preset-chips">
+            <button type="button" class="chip" onclick="window.app.loadScenario(1, 8)" title="North Gate to Food Court: Demonstrates BFS 1-hop 600m vs Dijkstra 3-hops 420m!">
+              North Gate &rarr; Food Court (Key Benchmark)
+            </button>
+            <button type="button" class="chip" onclick="window.app.loadScenario(1, 4)" title="North Gate to Computer Science">
+              North Gate &rarr; CS Dept
+            </button>
+            <button type="button" class="chip chip-warning" onclick="window.app.loadScenario(1, 16)" title="Tests disconnected graph detection (Observatory is isolated!)">
+              North Gate &rarr; Observatory (Disconnected!)
+            </button>
+            <button type="button" class="chip" onclick="window.app.loadScenario(11, 13)" title="North Hostel to South Campus Gate">
+              North Hostel &rarr; South Gate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Search & Filtering -->
+      <div class="card search-card">
+        <div class="card-header">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <h2 class="card-title">Search Campus</h2>
+        </div>
+        <div class="search-input-wrapper">
+          <input type="text" id="campus-search" class="form-input" placeholder="Search by name, code (CS-01), or amenity..." oninput="window.app.handleLiveSearch(this.value)">
+        </div>
+        <div id="search-results-list" class="search-results"></div>
+      </div>
+
+      <!-- Graph Modification Tools -->
+      <div class="card tools-card">
+        <div class="card-header collapsible" onclick="window.app.toggleAccordion('tools-body')">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <h2 class="card-title">Dynamic Graph Edits</h2>
+          <span class="accordion-arrow">&darr;</span>
+        </div>
+        <div id="tools-body" class="accordion-content">
+          <div class="tool-actions">
+            <button type="button" class="btn btn-outline" onclick="window.app.openModal('modal-add-location')">
+              + Add Campus Building
+            </button>
+            <button type="button" class="btn btn-outline" onclick="window.app.openModal('modal-add-road')">
+              + Add Road / Pathway
+            </button>
+            <button type="button" class="btn btn-success-outline" id="btn-quick-connect" onclick="window.app.connectObservatoryTrail()">
+              &oplus; Connect Isolated Observatory
+            </button>
+            <button type="button" class="btn btn-danger-outline" onclick="window.app.resetCampusData()">
+              &#8634; Reset Map to Default
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Center Canvas: Interactive Schematic Campus Map -->
+    <section class="map-pane">
+      <div class="map-card">
+        <div class="map-toolbar">
+          <div class="map-title-bar">
+            <h2 class="map-heading">Schematic University Map</h2>
+            <span class="map-subheading">Interactive Vector Adjacency Topology &bull; Click any building to route</span>
+          </div>
+
+          <div class="map-controls">
+            <button type="button" class="btn-ctrl" onclick="window.app.zoomMap(1.2)" title="Zoom In">+</button>
+            <button type="button" class="btn-ctrl" onclick="window.app.zoomMap(0.8)" title="Zoom Out">&minus;</button>
+            <button type="button" class="btn-ctrl" onclick="window.app.resetMapZoom()" title="Reset Zoom">Fit</button>
+            <button type="button" class="btn-ctrl" id="btn-toggle-labels" onclick="window.app.toggleRoadLabels()" title="Toggle Distance Labels">Distances: ON</button>
+          </div>
+        </div>
+
+        <!-- SVG Map Container -->
+        <div class="svg-container" id="svg-viewport">
+          <svg id="campus-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="glow-path" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="10" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#0055a5" />
+              </marker>
+            </defs>
+
+            <!-- Background & Quadrant Grid -->
+            <rect width="1000" height="700" fill="#f4f7fb" rx="12"></rect>
+            <g class="campus-grid-lines" opacity="0.4">
+              <line x1="500" y1="0" x2="500" y2="700" stroke="#cbd5e1" stroke-dasharray="4,4"></line>
+              <line x1="0" y1="350" x2="1000" y2="350" stroke="#cbd5e1" stroke-dasharray="4,4"></line>
+              <text x="510" y="25" fill="#94a3b8" font-size="11" font-weight="600">NORTH QUAD</text>
+              <text x="510" y="685" fill="#94a3b8" font-size="11" font-weight="600">SOUTH QUAD</text>
+              <text x="20" y="340" fill="#94a3b8" font-size="11" font-weight="600">WEST (LAKESIDE)</text>
+              <text x="880" y="340" fill="#94a3b8" font-size="11" font-weight="600">EAST (SPORTS)</text>
+            </g>
+
+            <!-- Layer 1: Edges (Roadways) -->
+            <g id="layer-edges"></g>
+
+            <!-- Layer 2: Highlighted Active Route Path -->
+            <g id="layer-route"></g>
+
+            <!-- Layer 3: Edge Weight Distance Badges -->
+            <g id="layer-edge-labels"></g>
+
+            <!-- Layer 4: Vertices (Landmark Buildings) -->
+            <g id="layer-nodes"></g>
+          </svg>
+
+          <!-- Interactive Tooltip -->
+          <div id="map-tooltip" class="map-tooltip"></div>
+        </div>
+
+        <!-- Map Category Legend -->
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-dot dot-entrance"></span> Entrance Gate</span>
+          <span class="legend-item"><span class="legend-dot dot-academic"></span> Academic</span>
+          <span class="legend-item"><span class="legend-dot dot-administrative"></span> Admin</span>
+          <span class="legend-item"><span class="legend-dot dot-recreation"></span> Food / Rec</span>
+          <span class="legend-item"><span class="legend-dot dot-sports"></span> Sports</span>
+          <span class="legend-item"><span class="legend-dot dot-healthcare"></span> Health</span>
+          <span class="legend-item"><span class="legend-dot dot-residential"></span> Hostel</span>
+          <span class="legend-item"><span class="legend-dot dot-research"></span> Research</span>
+          <span class="legend-item"><span class="legend-dot dot-isolated"></span> Isolated Node</span>
+        </div>
+      </div>
+
+      <!-- Route Results & Analytics Card -->
+      <div class="card result-card" id="route-result-panel">
+        <div class="card-header">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <h2 class="card-title" id="result-title">Route Analytics & Turn-by-Turn Itinerary</h2>
+        </div>
+
+        <!-- Placeholder when no route selected -->
+        <div id="result-placeholder" class="result-placeholder">
+          <div class="placeholder-icon">&#128506;</div>
+          <h3>Select Origin and Destination to Calculate Route</h3>
+          <p>Choose any two landmarks using the dropdowns on the left, click nodes directly on the campus map, or click one of the benchmark scenarios above.</p>
+        </div>
+
+        <!-- Disconnected Graph Error State -->
+        <div id="result-disconnected" class="alert alert-danger" style="display:none;">
+          <div class="alert-icon">&#9888;</div>
+          <div>
+            <h4 class="alert-title">Destination Unreachable (Disconnected Graph Detected)</h4>
+            <p id="disconnected-message">There is no contiguous physical road or pathway connecting the origin and destination.</p>
+            <button type="button" class="btn btn-sm btn-accent" onclick="window.app.connectObservatoryTrail()">
+              &oplus; Build Hillside Trail to Connect Space Observatory
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Route Details -->
+        <div id="result-active-content" style="display:none;">
+          
+          <!-- Route Top Metrics Banner -->
+          <div class="route-metrics-grid">
+            <div class="metric-pill">
+              <span class="metric-label">Total Distance</span>
+              <span class="metric-val text-primary" id="res-distance">--</span>
+              <span class="metric-sub" id="res-walk-time">--</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Navigational Hops</span>
+              <span class="metric-val" id="res-hops">--</span>
+              <span class="metric-sub">Pathways / Turns</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Nodes Settled</span>
+              <span class="metric-val" id="res-nodes-visited">--</span>
+              <span class="metric-sub">Vertices Expanded</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Edge Relaxations</span>
+              <span class="metric-val" id="res-edges-evaluated">--</span>
+              <span class="metric-sub">Evaluations Tested</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Execution Time</span>
+              <span class="metric-val text-accent" id="res-exec-time">--</span>
+              <span class="metric-sub">Microseconds (&mu;s)</span>
+            </div>
+          </div>
+
+          <!-- Turn-by-turn Itinerary Table -->
+          <div class="table-responsive">
+            <table class="itinerary-table">
+              <thead>
+                <tr>
+                  <th>Leg</th>
+                  <th>Origin</th>
+                  <th>Destination</th>
+                  <th>Leg Distance</th>
+                  <th>Cumulative</th>
+                  <th>Est. Pace</th>
+                  <th>Pathway Type</th>
+                  <th>Accessibility</th>
+                </tr>
+              </thead>
+              <tbody id="itinerary-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="algorithm-notes-box">
+            <strong>ADSA Evaluation Notes: </strong>
+            <span id="res-notes">--</span>
+          </div>
+
+        </div>
+
+        <!-- Multi-Algorithm Comparison Matrix -->
+        <div id="comparison-content" style="display:none;">
+          <h3 class="comparison-heading">Side-by-Side ADSA Algorithm Benchmark (Identical Endpoints)</h3>
+          
+          <div class="table-responsive">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Evaluation Metric</th>
+                  <th class="col-dijkstra">Dijkstra (Min-Heap)</th>
+                  <th class="col-bfs">BFS (Fewest Hops)</th>
+                  <th class="col-dfs">DFS (Exploratory)</th>
+                </tr>
+              </thead>
+              <tbody id="comparison-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Insights Box -->
+          <div class="comparison-insights" id="comparison-insights-list"></div>
+        </div>
+
+      </div>
+
+      <!-- Theoretical Complexity Reference Accordion -->
+      <div class="card theory-card">
+        <div class="card-header collapsible" onclick="window.app.toggleAccordion('theory-body')">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <h2 class="card-title">ADSA Theoretical Complexity & Viva Reference</h2>
+          <span class="accordion-arrow">&darr;</span>
+        </div>
+        <div id="theory-body" class="accordion-content">
+          <div class="theory-grid">
+            <div class="theory-item">
+              <h4>Adjacency List Graph</h4>
+              <p><strong>Space:</strong> O(|V| + |E|)</p>
+              <p><strong>Why:</strong> Campus maps have average degree d &approx; 3-4 (|E| &ll; |V|<sup>2</sup>). An Adjacency Matrix wastes O(|V|<sup>2</sup>) space with 98%+ zeroes.</p>
+            </div>
+            <div class="theory-item">
+              <h4>Dijkstra's Algorithm</h4>
+              <p><strong>Time:</strong> O((|V| + |E|) log |V|)</p>
+              <p><strong>Min-Priority Queue:</strong> Binary heap extracts min in O(log |V|), far outperforming linear scanning O(|V|<sup>2</sup>) on sparse graphs.</p>
+            </div>
+            <div class="theory-item">
+              <h4>Breadth-First Search (BFS)</h4>
+              <p><strong>Time:</strong> O(|V| + |E|)</p>
+              <p><strong>Hop Optimality:</strong> Guaranteed to find minimum hop count (fewest intersections), but not minimum physical distance on weighted edges.</p>
+            </div>
+            <div class="theory-item">
+              <h4>Depth-First Search (DFS)</h4>
+              <p><strong>Time:</strong> O(|V| + |E|)</p>
+              <p><strong>Exploration:</strong> Dives deeply along the first branch using a LIFO stack. Non-optimal for distance, but vital for cycle detection and connectivity.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal: Add New Location -->
+  <div id="modal-add-location" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Campus Landmark</h3>
+        <button type="button" class="modal-close" onclick="window.app.closeModal('modal-add-location')">&times;</button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.app.submitAddLocation();">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Building Name *</label>
+            <input type="text" id="new-loc-name" class="form-input" placeholder="e.g. Chemical Engineering Annex" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Building Code *</label>
+              <input type="text" id="new-loc-code" class="form-input" placeholder="e.g. CHEM-01" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="new-loc-category" class="form-select" required>
+                <option value="Academic">Academic</option>
+                <option value="Administrative">Administrative</option>
+                <option value="Recreation">Recreation / Dining</option>
+                <option value="Sports">Sports</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Residential">Residential</option>
+                <option value="Research">Research</option>
+                <option value="Entrance">Entrance Gate</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <input type="text" id="new-loc-desc" class="form-input" placeholder="Brief facility description...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Map X Coordinate (100 - 900)</label>
+              <input type="number" id="new-loc-x" class="form-input" value="450" min="50" max="950">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Map Y Coordinate (50 - 650)</label>
+              <input type="number" id="new-loc-y" class="form-input" value="350" min="50" max="650">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.app.closeModal('modal-add-location')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Landmark to Graph</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Road -->
+  <div id="modal-add-road" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Road / Pathway Connection</h3>
+        <button type="button" class="modal-close" onclick="window.app.closeModal('modal-add-road')">&times;</button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.app.submitAddRoad();">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">From Landmark *</label>
+              <select id="new-road-from" class="form-select" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">To Landmark *</label>
+              <select id="new-road-to" class="form-select" required></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Walking Distance (meters) *</label>
+              <input type="number" id="new-road-weight" class="form-input" placeholder="e.g. 150" min="1" max="10000" step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pathway Type</label>
+              <input type="text" id="new-road-type" class="form-input" placeholder="e.g. Covered Arcade, Main Road" value="Paved Walkway">
+            </div>
+          </div>
+          <div class="form-checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="new-road-bidi" checked> Bidirectional (both directions)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="new-road-accessible" checked> Wheelchair / Barrier-Free Accessible
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.app.closeModal('modal-add-road')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Pathway to Graph</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>Campus Navigator &bull; Advanced Data Structures & Algorithms &bull; Modern C++17 + Single Source of Truth REST Engine</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Campus Navigator (g++)",
+            "type": "shell",
+            "command": "C:/Users/sumit/.gemini/antigravity/scratch/w64devkit/bin/g++.exe",
+            "args": [
+                "-std=c++17",
+                "-Wall",
+                "-Wextra",
+                "-O2",
+                "-I${workspaceFolder}/include",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/CampusGraph.cpp",
+                "${workspaceFolder}/src/PathFinder.cpp",
+                "${workspaceFolder}/src/CampusData.cpp",
+                "${workspaceFolder}/src/TerminalUI.cpp",
+                "${workspaceFolder}/src/HttpServer.cpp",
+                "-lws2_32",
+                "-o",
+                "${workspaceFolder}/CampusNavigator.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build & Run Tests (g++)",
+            "type": "shell",
+            "command": "powershell -Command \"& 'C:/Users/sumit/.gemini/antigravity/scratch/w64devkit/bin/g++.exe' -std=c++17 -Wall -Wextra -O2 -I${workspaceFolder}/include ${workspaceFolder}/tests/test_main.cpp ${workspaceFolder}/src/CampusGraph.cpp ${workspaceFolder}/src/PathFinder.cpp ${workspaceFolder}/src/CampusData.cpp ${workspaceFolder}/src/TerminalUI.cpp ${workspaceFolder}/src/HttpServer.cpp -lws2_32 -o ${workspaceFolder}/CampusNavigatorTests.exe; & '${workspaceFolder}/CampusNavigatorTests.exe'\"",
+            "group": "test",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "CMake: Build All",
+            "type": "shell",
+            "command": "powershell -Command \"cmake -B ${workspaceFolder}/build -S ${workspaceFolder} -G 'MinGW Makefiles'; cmake --build ${workspaceFolder}/build\"",
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
